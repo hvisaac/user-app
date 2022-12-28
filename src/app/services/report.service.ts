@@ -18,9 +18,9 @@ export class ReportService {
     return this.http.post(`${environment.api}/my-reports/save-report`, report);
   }
 
-  increaseReport(_id: string, userphone: string) {
+  increaseReport(report: string, userphone: string) {
     const request = {
-      _id: _id,
+      _id: report,
       userphone: userphone,
     }
 
@@ -40,4 +40,9 @@ export class ReportService {
   getServicePhones(){
     return this.http.get(`${environment.api}/config/service-phones`);
   }
+
+  getDepartments() {
+    return this.http.get(`${environment.api}/config/departments`);
+  }
+
 }

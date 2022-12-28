@@ -1,12 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
-import { AlertController, IonSlides, ModalController } from '@ionic/angular';
+import { AlertController, IonSelect, IonSlides, ModalController } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
 import { MapPage } from '../map/map.page';
 import { PhotoService } from 'src/app/services/photo.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ReportService } from 'src/app/services/report.service';
-import { CallNumber } from '@awesome-cordova-plugins/call-number/ngx';
-
 
 @Component({
   selector: 'app-home',
@@ -20,6 +18,7 @@ export class HomePage {
   };
 
   @ViewChild('mySlider') slides: IonSlides;
+  @ViewChild('departmentsSelect') departmentsSelect: IonSelect;
 
   todayDate: Date = new Date('2022-11-17T19:53:22.459+00:00');
 
@@ -29,6 +28,7 @@ export class HomePage {
   longitude = new FormControl(null, [Validators.required]);
   photo = '';
   servicePhones: any[] = [];
+  departments: any[] = [];
 
   public reportForm = new FormGroup({
     reportType: this.reportType,
@@ -42,7 +42,6 @@ export class HomePage {
     public photoService: PhotoService,
     private reportService: ReportService,
     private alertController: AlertController,
-    private callNumber: CallNumber,
   ) {
 
   }
@@ -52,8 +51,18 @@ export class HomePage {
       console.log(servicePhones)
       this.servicePhones = servicePhones;
     });
+    this.reportService.getDepartments().subscribe((data: any) => {
+      console.log(data)
+      this.departments = data;
+      this.departmentsSelect.open();
+    });
   }
 
+  customPopoverOptions = {
+    header: 'TIPO DE REPORTE',
+    subHeader: 'Selecciona la opción que más se ajuste a tu reporte',
+    message: '<ion-img src="assets/mascot/Hi.gif"></ion-img>',
+  };
 
   async getLocation(inLocation: boolean) {
     if (inLocation) {
@@ -67,9 +76,7 @@ export class HomePage {
   }
 
   callServicePhone(phone) {
-    this.callNumber.callNumber(phone, true)
-      .then(res => console.log('Launched dialer!', res))
-      .catch(err => console.log('Error launching dialer', err));
+    window.open(`tel:${phone}`);
   }
 
   async openMap() {
@@ -183,7 +190,7 @@ export class HomePage {
           {
             text: 'No',
             role: 'cancel',
-            handler: (alertData) => {
+            handler: () => {
               this.increaseReport(response._id, '');
               this.finalAlert();
             },

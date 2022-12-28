@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "app-municipio-navojoa",
     "public": "dist",
     "ignore": [
       "firebase.json",

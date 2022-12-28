@@ -9,12 +9,12 @@
       <ion-img src="assets/mascot/Hi.gif"></ion-img>
       <h1> Voy a levantar un reporte </h1>
       <ion-list style="background: #911f3e;">
-        <ion-select style="--background:  #911f3e; color: #f6f5f5;" (ionChange)="this.mySlider.slideNext()"
+        <ion-select #departmentsSelect [interfaceOptions]="customPopoverOptions" mode="ios"
+          style="--background:  #911f3e; color: #f6f5f5;" (ionChange)="this.mySlider.slideNext()"
           formControlName="reportType" placeholder="Seleccionar tipo de reporte">
-          <ion-select-option value="1">Luz, Basura</ion-select-option>
-          <ion-select-option value="2">Baches</ion-select-option>
-          <ion-select-option value="3">Choque, Asalto</ion-select-option>
-          <ion-select-option value="4">Ecología</ion-select-option>
+          <div *ngFor="let department of departments">
+            <ion-select-option value="{{department._id}}">{{department.info}}</ion-select-option>
+          </div>
         </ion-select>
       </ion-list>
     </ion-slide>

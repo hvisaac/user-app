@@ -10,7 +10,6 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 
 import { HttpClientModule } from '@angular/common/http';
-import { CallNumber } from '@awesome-cordova-plugins/call-number/ngx';
 
 @NgModule({
   declarations: [AppComponent],
@@ -20,7 +19,7 @@ import { CallNumber } from '@awesome-cordova-plugins/call-number/ngx';
   // or after 30 seconds (whichever comes first).
   registrationStrategy: 'registerWhenStable:30000'
 })],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, CallNumber],
+  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
