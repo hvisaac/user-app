@@ -1,15 +1,10 @@
-<ion-header>
-  <ion-toolbar style="--background:  #f6f5f5;">
-  </ion-toolbar>
-</ion-header>
-
 <ion-content style="--background:  #911f3e;" [formGroup]="reportForm" [fullscreen]="true">
   <ion-slides [options]="slideOptions" pager="true" #mySlider>
     <ion-slide>
       <ion-img src="assets/mascot/Hi.gif"></ion-img>
       <h1> Voy a levantar un reporte </h1>
       <ion-list style="background: #911f3e;">
-        <ion-select #departmentsSelect [interfaceOptions]="customPopoverOptions" mode="ios"
+        <ion-select #departmentsSelect [interfaceOptions]="customPopoverOptions" mode="ios" cancelText="Cancelar" okText="De acuerdo"
           style="--background:  #911f3e; color: #f6f5f5;" (ionChange)="this.mySlider.slideNext()"
           formControlName="reportType" placeholder="Seleccionar tipo de reporte">
           <div *ngFor="let department of departments">
@@ -35,7 +30,7 @@
     </ion-slide>
     <ion-slide>
       <ion-img src="assets/mascot/Speak.gif"></ion-img>
-      <h1> ¿Deses tomar una foto del reporte?, este paso es opcional </h1>
+      <h1> ¿Deseas enviar una foto? (opcional) </h1>
       <ion-button color="dark" shape="round" style="margin-top: 15px;" (click)="shootPhoto()">
         <ion-icon slot="start" name="camera"></ion-icon>
         <ion-label> Tomar foto </ion-label>
@@ -43,14 +38,17 @@
     </ion-slide>
     <ion-slide>
       <ion-img src="assets/mascot/Speak.gif"></ion-img>
-      <h1> Detalla brevemente tu reporte </h1>
-      <ion-textarea maxlength="150" formControlName="description" placeholder="Detalles..."></ion-textarea>
+      <h1> Detalla tu reporte</h1>
+      <div style="padding: 15px;">
+        <ion-textarea style="--background: #f6f5f5; color: #000000; border-radius: 5px;" maxlength="150" formControlName="description"
+          placeholder="Detalles..."></ion-textarea>
+      </div>
       <ion-button color="dark" shape="round" (click)="this.mySlider.slideNext()"> Listo </ion-button>
     </ion-slide>
     <ion-slide>
       <ion-img *ngIf="!reportForm.valid" src="assets/mascot/Idle.gif"></ion-img>
       <ion-img *ngIf="reportForm.valid" src="assets/mascot/Hi.gif"></ion-img>
-      <h1 *ngIf="!reportForm.valid"> Creo que faltan campos por llenar </h1>
+      <h1 *ngIf="!reportForm.valid"> Faltan campos por llenar, puede desplazarse hacia arriba o seleccionar una opción</h1>
       <h1 *ngIf="reportForm.valid"> Todo listo, vamos a enviar tu reporte </h1>
       <ion-button color="dark" shape="round" (click)="sendReport()" [disabled]="!reportForm.valid">
         <ion-icon *ngIf="!reportForm.valid" slot="end" name="mail-open"></ion-icon>
@@ -58,22 +56,22 @@
         <ion-label> Enviar </ion-label>
       </ion-button>
       <ion-list style="background: #911f3e;">
-        <ion-item style="--background: #911f3e;">
+        <ion-item style="--background: #911f3e;" (click)="this.slides.slideTo(0)">
           <ion-icon *ngIf="!this.reportType.valid" slot="start" name="close-circle" color="danger"></ion-icon>
           <ion-icon *ngIf="this.reportType.valid" slot="start" name="checkmark-circle" color="success"></ion-icon>
           <ion-label> Tipo de reporte </ion-label>
         </ion-item>
-        <ion-item style="--background: #911f3e;">
+        <ion-item style="--background: #911f3e;" (click)="this.slides.slideTo(1)">
           <ion-icon *ngIf="!this.latitude.valid" slot="start" name="close-circle" color="danger"></ion-icon>
           <ion-icon *ngIf="this.latitude.valid" slot="start" name="checkmark-circle" color="success"></ion-icon>
           <ion-label> Ubicación </ion-label>
         </ion-item>
-        <ion-item style="--background: #911f3e;">
+        <ion-item style="--background: #911f3e;" (click)="this.slides.slideTo(2)">
           <ion-icon *ngIf="this.photo == ''" slot="start" name="close-circle" color="danger"></ion-icon>
           <ion-icon *ngIf="this.photo != ''" slot="start" name="checkmark-circle" color="success"></ion-icon>
           <ion-label> Foto (Opcional) </ion-label>
         </ion-item>
-        <ion-item style="--background: #911f3e;">
+        <ion-item style="--background: #911f3e;" (click)="this.slides.slideTo(3)">
           <ion-icon *ngIf="!this.description.valid" slot="start" name="close-circle" color="danger"></ion-icon>
           <ion-icon *ngIf="this.description.valid" slot="start" name="checkmark-circle" color="success"></ion-icon>
           <ion-label> Detalles </ion-label>
@@ -82,7 +80,7 @@
     </ion-slide>
   </ion-slides>
   <ion-fab slot="fixed" vertical="top" horizontal="start">
-    <ion-fab-button color="dark">
+    <ion-fab-button color="primary">
       <ion-icon name="call"></ion-icon>
     </ion-fab-button>
     <ion-fab-list side="bottom">

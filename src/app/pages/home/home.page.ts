@@ -1,10 +1,14 @@
 import { Component, ViewChild } from '@angular/core';
-import { AlertController, IonSelect, IonSlides, ModalController } from '@ionic/angular';
-import { Geolocation } from '@capacitor/geolocation';
+import { AlertController, IonicSafeString, IonSelect, IonSlides, ModalController, ToastController } from '@ionic/angular';
+import { Geolocation, Position } from '@capacitor/geolocation';
 import { MapPage } from '../map/map.page';
 import { PhotoService } from 'src/app/services/photo.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ReportService } from 'src/app/services/report.service';
+import { FirebaseService } from 'src/app/services/firebase.service';
+import { LoadingService } from 'src/app/services/loading.service';
+import { environment } from 'src/environments/environment';
+import { ConfirmPhonePage } from '../confirm-phone/confirm-phone.page';
 
 @Component({
   selector: 'app-home',
@@ -26,9 +30,11 @@ export class HomePage {
   description = new FormControl('', [Validators.required]);
   latitude = new FormControl(null, [Validators.required]);
   longitude = new FormControl(null, [Validators.required]);
-  photo = '';
+  photo: any;
   servicePhones: any[] = [];
   departments: any[] = [];
+  verificatedPhone: boolean = false;
+  userPhone: string = '';
 
   public reportForm = new FormGroup({
     reportType: this.reportType,
@@ -42,18 +48,28 @@ export class HomePage {
     public photoService: PhotoService,
     private reportService: ReportService,
     private alertController: AlertController,
+    private firebaseService: FirebaseService,
+    private loadingService: LoadingService,
+    private toastController: ToastController
   ) {
 
   }
 
   async ngOnInit() {
     this.reportService.getServicePhones().subscribe((servicePhones: any[]) => {
-      console.log(servicePhones)
-      this.servicePhones = servicePhones;
+      for (let servicePhone of servicePhones) {
+        if (servicePhone.available) {
+          this.servicePhones.push(servicePhone)
+        }
+      }
     });
     this.reportService.getDepartments().subscribe((data: any) => {
-      console.log(data)
-      this.departments = data;
+      for (let department of data) {
+        department.secretariat = JSON.parse(department.secretariat)[0];
+        if (department.available && department.secretariat.available && department.name != "Spam") {
+          this.departments.push(department)
+        }
+      }
       this.departmentsSelect.open();
     });
   }
@@ -62,13 +78,15 @@ export class HomePage {
     header: 'TIPO DE REPORTE',
     subHeader: 'Selecciona la opción que más se ajuste a tu reporte',
     message: '<ion-img src="assets/mascot/Hi.gif"></ion-img>',
-  };
+  }
 
   async getLocation(inLocation: boolean) {
     if (inLocation) {
       let coordinates = await Geolocation.getCurrentPosition();
-      this.reportForm.get('latitude').setValue(coordinates.coords.latitude);
-      this.reportForm.get('longitude').setValue(coordinates.coords.longitude);
+      const position: Position = coordinates;
+
+      this.reportForm.get('latitude').setValue(position.coords.latitude);
+      this.reportForm.get('longitude').setValue(position.coords.longitude);
       this.slides.slideNext();
     } else {
       this.openMap();
@@ -80,6 +98,7 @@ export class HomePage {
   }
 
   async openMap() {
+    this.loadingService.showLoading()
     let coordinates = await Geolocation.getCurrentPosition();
     const modal = await this.modalController.create({
       component: MapPage,
@@ -89,7 +108,7 @@ export class HomePage {
       }
     });
 
-    await modal.present();
+    await modal.present().then(() => this.loadingService.dismissLoading());
 
     const { data } = await modal.onDidDismiss();
 
@@ -99,12 +118,29 @@ export class HomePage {
       this.reportService.confirmReport(data.location.latitude, data.location.longitude, this.reportForm.get('reportType').value)
         .subscribe((response: any) => {
           if (response) {
-            this.existAlert(response._id);
+            this.existAlert(response._id, response.folio);
           } else {
             this.slides.slideNext();
           }
         });
     }
+  }
+
+  async confirmPhone(folio, id) {
+    this.loadingService.showLoading()
+    const modal = await this.modalController.create({
+      component: ConfirmPhonePage,
+      componentProps: {
+        folio: folio,
+        id: id
+      }
+    });
+
+    await modal.present().then(() => this.loadingService.dismissLoading());
+
+    const { data } = await modal.onDidDismiss();
+
+    if (data.verified) this.finalAlert()
   }
 
   async shootPhoto() {
@@ -117,7 +153,7 @@ export class HomePage {
       department: this.reportForm.get('reportType').value,
       description: this.reportForm.get('description').value,
       status: 0,
-      photo: this.photo,
+      photo: '',
       geolocation: {
         latitude: this.reportForm.get('latitude').value,
         longitude: this.reportForm.get('longitude').value,
@@ -127,35 +163,24 @@ export class HomePage {
 
   }
 
-  async existAlert(idReport) {
+  async existAlert(idReport, folio) {
     const alert = await this.alertController.create({
       backdropDismiss: false,
-      header: `El reporte que intenta levantar ya existe, ¿le gustaría que le notifiquemos cuando quede resuelto?`,
-      inputs: [
-        {
-          name: 'userphone',
-          type: 'number',
-          placeholder: 'Teléfono',
-          min: 10,
-          max: 10,
-        }
-      ],
+      header: `El reporte que intenta levantar ya existe con el folio #${folio}, ¿le gustaría que le notifiquemos cuando quede resuelto?`,
       buttons: [
         {
-          text: 'Si',
-          role: 'confirm',
-          handler: (alertData) => {
-            this.increaseReport(idReport, alertData.userphone);
-            this.finalAlert();
+          text: 'Confirmar teléfono',
+          handler: () => {
+            this.confirmPhone(folio, idReport)
+            return false
           },
         },
         {
-          text: 'No',
-          role: 'cancel',
-          handler: (alertData) => {
+          text: 'Continuar sin suscribirse',
+          handler: () => {
             this.increaseReport(idReport, '');
-            this.finalAlert();
-          },
+            this.finalAlert()
+          }
         },
       ],
     });
@@ -165,35 +190,23 @@ export class HomePage {
 
   async phoneAlert(report: any) {
     this.reportService.saveReport(report).subscribe(async (response: any) => {
-      console.log(response);
+      this.reportService.addPhotoToReport(response._id, await this.addPhotoToReport(response.folio, this.photo, "reported")).subscribe()
       const alert = await this.alertController.create({
         backdropDismiss: false,
-        header: `Reporte ${response.folio} enviado, ¿le gustaría que le notifiquemos cuando quede resuelto?`,
-        inputs: [
-          {
-            name: 'userphone',
-            type: 'number',
-            placeholder: 'Teléfono',
-            min: 10,
-            max: 10,
-          }
-        ],
+        header: `Reporte #${response.folio} enviado. Para recibir avances confirma tu teléfono y suscríbete`,
         buttons: [
           {
-            text: 'Si',
-            role: 'confirm',
-            handler: (alertData) => {
-              this.increaseReport(response._id, alertData.userphone);
-              this.finalAlert();
+            text: 'Confirmar teléfono',
+            handler: () => {
+              this.confirmPhone(response.folio, response._id)
+              return false
             },
           },
           {
-            text: 'No',
-            role: 'cancel',
+            text: 'Continuar sin suscribirse',
             handler: () => {
-              this.increaseReport(response._id, '');
-              this.finalAlert();
-            },
+              this.finalAlert()
+            }
           },
         ],
       });
@@ -205,7 +218,7 @@ export class HomePage {
   async finalAlert() {
     const alert = await this.alertController.create({
       backdropDismiss: false,
-      header: 'Gracias por notificarnos, le daremos solución lo más pronto posible, que tenga un exelente día',
+      header: 'Gracias por notificarnos, te daremos solución lo más pronto posible, que tengas un excelente día',
     });
     await alert.present();
 
@@ -216,9 +229,22 @@ export class HomePage {
   }
 
   increaseReport(_id: string, userphone: string) {
-    this.reportService.increaseReport(_id, userphone).subscribe((response) => {
-      console.log(response)
-    });
+    this.reportService.increaseReport(_id, userphone).subscribe();
   }
 
+  async addPhotoToReport(folio, photo, name) {
+    const date = new Date();
+    return await this.firebaseService.uploadImage(`${environment.firebasePath}/${date.getFullYear()}/${date.getMonth() + 1}/${folio}`, photo, name);
+  }
+
+
+  async presentToast(message) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 3000,
+      position: 'bottom'
+    });
+
+    await toast.present();
+  }
 }

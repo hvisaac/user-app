@@ -5,6 +5,16 @@
 export const environment = {
   production: false,
   api: "http://localhost:3000",
+  firebaseConfig: {
+    apiKey: "AIzaSyCi4w9Qi38heWpWUKoiLdqaG8CPwvt7oBY",
+    authDomain: "app-municipio-navojoa.firebaseapp.com",
+    projectId: "app-municipio-navojoa",
+    storageBucket: "app-municipio-navojoa.appspot.com",
+    messagingSenderId: "189270838107",
+    appId: "1:189270838107:web:fe727a910892977e5e287e",
+    measurementId: "G-4JKQXGPCPH"
+  },
+  firebasePath: 'debug'
 };
 
 /*

@@ -9,11 +9,14 @@ import { MapPage } from '../map/map.page';
 import { MapPageModule } from '../map/map.module';
 
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ConfirmPhonePage } from '../confirm-phone/confirm-phone.page';
+import { ConfirmPhonePageModule } from '../confirm-phone/confirm-phone.module';
 
 
 @NgModule({
   entryComponents: [
     MapPage,
+    ConfirmPhonePage
   ],
   imports: [
     CommonModule,
@@ -22,6 +25,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     HomePageRoutingModule,
     MapPageModule,
     FormsModule, ReactiveFormsModule,
+    ConfirmPhonePageModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   declarations: [HomePage]

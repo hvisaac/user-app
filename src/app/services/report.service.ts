@@ -14,7 +14,6 @@ export class ReportService {
   }
 
   saveReport(report: any) {
-    console.log(report)
     return this.http.post(`${environment.api}/my-reports/save-report`, report);
   }
 
@@ -25,6 +24,14 @@ export class ReportService {
     }
 
     return this.http.post(`${environment.api}/my-reports/increase-report`, request);
+  }
+
+  addPhotoToReport(_id, photo) {
+    const request = {
+      "media.reportedImage": photo
+    }
+
+    return this.http.put(`${environment.api}/my-reports/${_id}/report`, request);
   }
 
   confirmReport(currentLat, currentLong, department){
@@ -43,6 +50,25 @@ export class ReportService {
 
   getDepartments() {
     return this.http.get(`${environment.api}/config/departments`);
+  }
+
+  addPhone(_id, phone) {
+    const request = {
+      "$push": {
+        users: phone
+      }
+    }
+    return this.http.put(`${environment.api}/my-reports/${_id}/report`, request);
+
+  }
+
+  confirmPhone(phone, folio) {
+    const request = {
+      phone: phone,
+      folio: folio
+    }
+
+    return this.http.post(`${environment.api}/config/confirm-phone`, request);
   }
 
 }
